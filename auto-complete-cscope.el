@@ -25,18 +25,17 @@
 (defvar cscope-completion-activated t
   "t if cscope-completion is in used, nil otherwise.")
 
+(defvar cscope-candidates (list ""))
+
 (defface ac-cscope-candidate-face
-  '((t (:inherit ac-candidate-face :foreground "coral3")))
+  '((t (:inherit ac-candidate-face :foreground "DarkSlateGrey")))
   "Face for cscope candidate"
   :group 'auto-complete)
 
 (defface ac-cscope-selection-face
-  '((t (:inherit ac-selection-face :background "coral3")))
+  '((t (:inherit ac-selection-face)))
   "Face for the cscope selected candidate."
   :group 'auto-complete)
-
-
-(defvar cscope-candidates (list "get_battery_capacity" "get_battery_level" "get_device_policy" "get_device_state" ))
 
 (defun ac-cscope-line-filter(line)
   (setq highlight-search-re (concat ac-prefix ".*"))
@@ -56,9 +55,7 @@
   "Accept cscope process output and reformat it for human readability.
 Magic text properties are added to allow the user to select lines
 using the mouse."
-  (let (line file function-name line-number)
-    (save-excursion
-      ;; Get the output thus far ...
+  (let (line)
       (if cscope-process-output
 	  (setq cscope-process-output (concat cscope-process-output
 					      output))
@@ -68,9 +65,6 @@ using the mouse."
       (while (and cscope-process-output
 		  (string-match "\\([^\n]+\n\\)\\(\\(.\\|\n\\)*\\)"
 				cscope-process-output))
-	(setq file				nil
-	      glimpse-stripped-directory	nil
-	      )
 	;; Get a line
 	(setq line (substring cscope-process-output
 			      (match-beginning 1) (match-end 1)))
@@ -85,16 +79,10 @@ using the mouse."
 	     "^\\([^ \t]+\\)[ \t]+\\([^ \t]+\\)[ \t]+\\([0-9]+\\)[ \t]+\\(.*\\)\n"
 	     line)
 	    (progn
-	      (let (str)
-		(setq line (substring line (match-beginning 4)
+	      (setq line (substring line (match-beginning 4)
 				      (match-end 4)))
-
 		;; filter line
-		(ac-cscope-line-filter line)
-
-		(setq cscope-last-file file)
-		))
-	  )))))
+		(ac-cscope-line-filter line))))))
 
 (defun ac-cscope-process-sentinel (process event)
   "Sentinel for when the cscope process dies."
@@ -102,9 +90,8 @@ using the mouse."
   (setq cscope-process nil))
 
 (defun ac-cscope-candidate ()
-  "Pop a database entry from cscope-search-list and do a search there."
+  "search completions candidates in cscope database"
   (let ( options cscope-directory database-file outbuf base-database-file-name)
-    (save-excursion
       (if (and cscope-initial-directory cscope-completion-activated)
 	  (progn
 	    (setq tramp-verbose 0)
@@ -125,12 +112,9 @@ using the mouse."
 	    ;; Add the correct database file to search
 	    (setq options (cons base-database-file-name options))
 	    (setq options (cons "-f" options))
-	    (setq cscope-output-start (point))
 	    (setq default-directory cscope-directory)
 
-	    (setq cscope-process-output nil
-		  cscope-last-file nil
-		  )
+	    (setq cscope-process-output nil)
 
 	    (setq cscope-process
 		  ;; Communicate with a pipe. Slightly more efficient than
@@ -145,7 +129,7 @@ using the mouse."
 	    (process-kill-without-query cscope-process)
 	    (setq tramp-verbose 3)))
       cscope-candidates
-      )))
+      ))
 
 (ac-define-source cscope
   '((candidates . ac-cscope-candidate)
@@ -153,7 +137,6 @@ using the mouse."
     (selection-face . ac-cscope-selection-face)
     (requires . 3)
     (symbol . "s")))
-
 
 (defun toggle-cscope-completion ()
   (interactive)
