@@ -93,6 +93,11 @@ using the mouse."
 		))
 	  )))))
 
+(defun ac-cscope-process-sentinel (process event)
+  "Sentinel for when the cscope process dies."
+  (delete-process process)
+  (setq cscope-process nil))
+
 (defun ac-cscope-candidate ()
   "Pop a database entry from cscope-search-list and do a search there."
   (let ( options cscope-directory database-file outbuf base-database-file-name)
@@ -130,6 +135,7 @@ using the mouse."
 		     (append (cscope-construct-custom-options-list) options))))
 
       (set-process-filter cscope-process 'ac-cscope-process-filter)
+      (set-process-sentinel cscope-process 'ac-cscope-process-sentinel)
       (process-kill-without-query cscope-process)
       cscope-candidates
       )))
