@@ -6,16 +6,25 @@
 
   You will see completion from Cscope in "coral3" color.
 
+
 * Install
 
   Here is my configurations for AC and auto-complete-cscope for your reference.
 
   #+BEGIN_SRC emacs-lisp
+    ;; auto complete config with cscope
+    (require 'auto-complete)
+    (require 'auto-complete-config)
     (require 'auto-complete-cscope)
     (defun ac-cscope-cc-mode-setup ()
-      (setq ac-sources (append '(ac-source-cscope) ac-sources)))
+      (setq ac-sources '(ac-source-abbrev ac-source-dictionary ac-source-yasnippet ac-source-cscope)))
+    (setq-default ac-sources '(ac-source-abbrev ac-source-dictionary ac-source-words-in-same-mode-buffers))
+    (add-hook 'emacs-lisp-mode-hook 'ac-emacs-lisp-mode-setup)
     (add-hook 'c-mode-common-hook 'ac-cscope-cc-mode-setup)
+    (add-hook 'auto-complete-mode-hook 'ac-common-setup)
+    (global-auto-complete-mode t)
   #+END_SRC
+  
 
 
 * Note
