@@ -22,6 +22,9 @@
 
 (require 'xcscope)
 
+(defvar cscope-completion-activated t
+  "t if cscope-completion is in used, nil otherwise.")
+
 (defface ac-cscope-candidate-face
   '((t (:inherit ac-candidate-face :foreground "coral3")))
   "Face for cscope candidate"
@@ -46,8 +49,8 @@
 		 line)))
     (when start
       (setq cscope-candidates (append
-				(list (substring line start (match-end 0)))
-				cscope-candidates)))))
+			       (list (substring line start (match-end 0)))
+			       cscope-candidates)))))
 
 (defun ac-cscope-process-filter (process output)
   "Accept cscope process output and reformat it for human readability.
@@ -102,41 +105,45 @@ using the mouse."
   "Pop a database entry from cscope-search-list and do a search there."
   (let ( options cscope-directory database-file outbuf base-database-file-name)
     (save-excursion
-      (setq options (list "-L" "-1" (concat ac-prefix ".*")))
-      (setq cscope-directory cscope-initial-directory)
-      (setq base-database-file-name "cscope.out")
-      (setq database-file (concat cscope-directory base-database-file-name)
-	    cscope-searched-dirs (cons cscope-directory
-				       cscope-searched-dirs))
-      
-      ;; The database file and the directory containing the database file
-      ;; must both be writable.
-      (if (or (not (file-writable-p database-file))
-	      (not (file-writable-p (file-name-directory database-file)))
-	      cscope-option-do-not-update-database)
-	  (setq options (cons "-d" options)))
-      
-      ;; Add the correct database file to search
-      (setq options (cons base-database-file-name options))
-      (setq options (cons "-f" options))
-      (setq cscope-output-start (point))
-      (setq default-directory cscope-directory)
+      (if (and cscope-initial-directory cscope-completion-activated)
+	  (progn
+	    (setq tramp-verbose 0)
+	    (setq options (list "-L" "-1" (concat ac-prefix ".*")))
+	    (setq cscope-directory cscope-initial-directory)
+	    (setq base-database-file-name "cscope.out")
+	    (setq database-file (concat cscope-directory base-database-file-name)
+		  cscope-searched-dirs (cons cscope-directory
+					     cscope-searched-dirs))
 
-      (setq cscope-process-output nil
-	    cscope-last-file nil
-	    )
+	    ;; The database file and the directory containing the database file
+	    ;; must both be writable.
+	    (if (or (not (file-writable-p database-file))
+		    (not (file-writable-p (file-name-directory database-file)))
+		    cscope-option-do-not-update-database)
+		(setq options (cons "-d" options)))
 
-      (setq cscope-process
-	    ;; Communicate with a pipe. Slightly more efficient than
-	    ;; a TTY
-	    (let ((process-connection-type nil))
-	      (apply cscope-start-file-process "cscope" outbuf
-		     cscope-program
-		     (append (cscope-construct-custom-options-list) options))))
+	    ;; Add the correct database file to search
+	    (setq options (cons base-database-file-name options))
+	    (setq options (cons "-f" options))
+	    (setq cscope-output-start (point))
+	    (setq default-directory cscope-directory)
 
-      (set-process-filter cscope-process 'ac-cscope-process-filter)
-      (set-process-sentinel cscope-process 'ac-cscope-process-sentinel)
-      (process-kill-without-query cscope-process)
+	    (setq cscope-process-output nil
+		  cscope-last-file nil
+		  )
+
+	    (setq cscope-process
+		  ;; Communicate with a pipe. Slightly more efficient than
+		  ;; a TTY
+		  (let ((process-connection-type nil))
+		    (apply cscope-start-file-process "cscope" outbuf
+			   cscope-program
+			   (append (cscope-construct-custom-options-list) options))))
+
+	    (set-process-filter cscope-process 'ac-cscope-process-filter)
+	    (set-process-sentinel cscope-process 'ac-cscope-process-sentinel)
+	    (process-kill-without-query cscope-process)
+	    (setq tramp-verbose 3)))
       cscope-candidates
       )))
 
@@ -146,6 +153,11 @@ using the mouse."
     (selection-face . ac-cscope-selection-face)
     (requires . 3)
     (symbol . "s")))
+
+
+(defun toggle-cscope-completion ()
+  (interactive)
+  (setq cscope-completion-activated (not cscope-completion-activated)))
 
 
 (provide 'auto-complete-cscope)
