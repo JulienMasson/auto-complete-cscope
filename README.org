@@ -16,6 +16,7 @@
     (require 'auto-complete)
     (require 'auto-complete-config)
     (require 'auto-complete-cscope)
+    (setq default-cscope-mirror-path "/home/jmassonx/.emacs.d/cscope-mirrors/")
     (defun ac-cscope-cc-mode-setup ()
       (setq ac-sources '(ac-source-abbrev ac-source-dictionary ac-source-yasnippet ac-source-cscope)))
     (setq-default ac-sources '(ac-source-abbrev ac-source-dictionary ac-source-words-in-same-mode-buffers))

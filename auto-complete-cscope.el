@@ -20,12 +20,16 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
+(require 'tramp)
 (require 'xcscope)
 
 (defvar cscope-completion-activated t
   "t if cscope-completion is in used, nil otherwise.")
 
 (defvar cscope-candidates (list ""))
+
+(defvar default-cscope-mirror-path nil
+    "set to a PATH where to find cscope mirror on local.")
 
 (defface ac-cscope-candidate-face
   '((t (:inherit ac-candidate-face :foreground "DarkSlateGrey")))
@@ -91,12 +95,26 @@ using the mouse."
 
 (defun ac-cscope-candidate ()
   "search completions candidates in cscope database"
-  (let ( options current-directory cscope-directory database-file outbuf base-database-file-name)
+  (let ( options mirror-directory current-directory cscope-directory database-file outbuf base-database-file-name)
       (if (and cscope-initial-directory cscope-completion-activated)
 	  (progn
+
+	    ;; if cscope-initial-directory in on remote machine
+	    ;; and user use default-cscope-mirror-path
+	    (if (and (tramp-tramp-file-p cscope-initial-directory)
+	    	     default-cscope-mirror-path)
+		(progn
+		  (setq mirror-directory (concat default-cscope-mirror-path
+						 (car (last (split-string cscope-initial-directory "/" t)))
+						 "/"))
+		  (if (file-exists-p mirror-directory)
+		      (setq cscope-directory mirror-directory)
+		    (setq cscope-directory cscope-initial-directory)))
+	      (setq cscope-directory cscope-initial-directory))
+
+	    ;; common options
 	    (setq tramp-verbose 0)
 	    (setq options (list "-L" "-1" (concat ac-prefix ".*")))
-	    (setq cscope-directory cscope-initial-directory)
 	    (setq base-database-file-name "cscope.out")
 	    (setq database-file (concat cscope-directory base-database-file-name)
 		  cscope-searched-dirs (cons cscope-directory
@@ -143,5 +161,15 @@ using the mouse."
   (interactive)
   (setq cscope-completion-activated (not cscope-completion-activated)))
 
+(defun update-cscope-mirror-database ()
+  (interactive)
+  (if (and (tramp-tramp-file-p cscope-initial-directory)
+	   default-cscope-mirror-path)
+      (progn
+	(cscope-index-files cscope-initial-directory)
+	(copy-directory
+	 cscope-initial-directory
+	 (concat default-cscope-mirror-path
+		 (file-name-nondirectory (directory-file-name cscope-initial-directory)))))))
 
 (provide 'auto-complete-cscope)
