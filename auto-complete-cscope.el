@@ -91,7 +91,7 @@ using the mouse."
 
 (defun ac-cscope-candidate ()
   "search completions candidates in cscope database"
-  (let ( options cscope-directory database-file outbuf base-database-file-name)
+  (let ( options current-directory cscope-directory database-file outbuf base-database-file-name)
       (if (and cscope-initial-directory cscope-completion-activated)
 	  (progn
 	    (setq tramp-verbose 0)
@@ -112,8 +112,8 @@ using the mouse."
 	    ;; Add the correct database file to search
 	    (setq options (cons base-database-file-name options))
 	    (setq options (cons "-f" options))
+	    (setq current-directory default-directory)
 	    (setq default-directory cscope-directory)
-
 	    (setq cscope-process-output nil)
 
 	    (setq cscope-process
@@ -127,6 +127,7 @@ using the mouse."
 	    (set-process-filter cscope-process 'ac-cscope-process-filter)
 	    (set-process-sentinel cscope-process 'ac-cscope-process-sentinel)
 	    (process-kill-without-query cscope-process)
+	    (setq default-directory current-directory)
 	    (setq tramp-verbose 3)))
       cscope-candidates
       ))
