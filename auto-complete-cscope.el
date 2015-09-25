@@ -29,7 +29,9 @@
 (defvar cscope-candidates (list ""))
 
 (defvar default-cscope-mirror-path nil
-    "set to a PATH where to find cscope mirror on local.")
+  "set to a PATH where to find cscope mirror on local.")
+
+(defvar last-default-cscope-mirror-path nil)
 
 (defface ac-cscope-candidate-face
   '((t (:inherit ac-candidate-face :foreground "DarkSlateGrey")))
@@ -159,7 +161,18 @@ using the mouse."
 
 (defun toggle-cscope-completion ()
   (interactive)
-  (setq cscope-completion-activated (not cscope-completion-activated)))
+  (setq cscope-completion-activated (not cscope-completion-activated))
+  (if cscope-completion-activated
+      (message (propertize "Cscope completion enabled" 'face 'success))
+    (message (propertize "Cscope completion disabled" 'face 'error))))
+
+(defun toggle-cscope-mirror-completion ()
+  (interactive)
+  (if default-cscope-mirror-path
+      (progn
+	(setq last-default-cscope-mirror-path default-cscope-mirror-path)
+	(setq default-cscope-mirror-path nil))
+    (setq default-cscope-mirror-path last-default-cscope-mirror-path)))
 
 (defun update-cscope-mirror-database ()
   (interactive)
