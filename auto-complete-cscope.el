@@ -23,7 +23,7 @@
 (require 'tramp)
 (require 'xcscope)
 
-(defvar cscope-completion-activated t
+(defvar cscope-completion-activated nil
   "t if cscope-completion is in used, nil otherwise.")
 
 (defvar cscope-candidates (list ""))
